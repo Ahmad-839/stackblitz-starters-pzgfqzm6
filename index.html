@@ -216,19 +216,25 @@
                     return 'wrong';
                 }
 
-                // Normalisasi string untuk perbandingan
+                // Normalisasi string untuk perbandingan dasar
                 const valK = String(cellKunci.v).trim().toLowerCase();
                 const valS = String(cellSiswa.v).trim().toLowerCase();
 
-                // Perbandingan persis sama
+                // 1. Perbandingan persis sama
                 if (valK === valS) return 'correct';
 
-                // Perbandingan angka (Toleransi pembulatan)
+                // 2. Perbandingan angka (Toleransi pembulatan desimal jika menggunakan koma)
                 const numK = parseFloat(valK);
                 const numS = parseFloat(valS);
                 if (!isNaN(numK) && !isNaN(numS)) {
                     if (Math.abs(numK - numS) < 0.1) return 'correct';
                 }
+
+                // 3. Ekstraksi karakter huruf dan angka saja 
+                // (Ini mengatasi masalah penulisan manual 'Rp', spasi, titik, koma, dsb.)
+                const cleanK = valK.replace(/[^a-z0-9]/gi, '');
+                const cleanS = valS.replace(/[^a-z0-9]/gi, '');
+                if (cleanK !== '' && cleanK === cleanS) return 'correct';
 
                 return 'wrong';
             }
@@ -256,6 +262,9 @@
                     headerRow.push("TOTAL NILAI AKHIR (100)");
 
                     const rekapDataArray = [headerRow];
+                    
+                    // Helper agar nama sheet fleksibel (mengabaikan spasi, angka nomor, dan besar-kecil huruf)
+                    const normalizeName = (name) => name.replace(/[^a-zA-Z]/g, '').toLowerCase();
 
                     // Loop proses setiap file siswa
                     for (let i = 0; i < filesSiswa.length; i++) {
@@ -276,9 +285,21 @@
                                 let correct = 0;
                                 let evaluable = 0;
 
-                                if (wbKunci.SheetNames.includes(sheetName) && wbSiswa.SheetNames.includes(sheetName)) {
-                                    const sheetKunci = wbKunci.Sheets[sheetName];
-                                    const sheetSiswa = wbSiswa.Sheets[sheetName];
+                                const normTarget = normalizeName(sheetName);
+                                
+                                // Mencari sheet yang namanya mengandung teks target 
+                                // (misal: "1. Jurnal Kas Kecil" akan cocok dengan "Jurnal Kas Kecil")
+                                const actualKunciSheetName = wbKunci.SheetNames.find(n => normalizeName(n).includes(normTarget));
+                                const actualSiswaSheetName = wbSiswa.SheetNames.find(n => normalizeName(n).includes(normTarget));
+
+                                // Beri log peringatan di iterasi pertama jika ada sheet yang sama sekali tidak ditemukan
+                                if (i === 0 && (!actualKunciSheetName || !actualSiswaSheetName)) {
+                                    log(`<span class="text-amber-400">[Perhatian] Sheet terkait "${sheetName}" tidak ditemukan di file Kunci / Siswa. Bagian ini dilewati.</span>`);
+                                }
+
+                                if (actualKunciSheetName && actualSiswaSheetName) {
+                                    const sheetKunci = wbKunci.Sheets[actualKunciSheetName];
+                                    const sheetSiswa = wbSiswa.Sheets[actualSiswaSheetName];
                                     
                                     const rangeKunciStr = sheetKunci['!ref'];
                                     

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Koreksi Excel Otomatis</title>
+    <!-- Load Tailwind CSS untuk Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load SheetJS untuk manipulasi file Excel di Browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animasi loading sederhana */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+    
+    <div class="max-w-4xl mx-auto py-10 px-4">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-blue-600 mb-2">Sistem Koreksi Excel Otomatis</h1>
+            <p class="text-gray-500">Versi Web (Client-Side) - Tidak perlu instalasi</p>
+        </header>
+
+        <main class="bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
+            
+            <div class="space-y-8">
+                
+                <!-- Input File Master -->
+                <section class="border border-gray-200 rounded-xl p-5 bg-gray-50/50">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 font-bold text-sm">1</span>
+                        Unggah File Master Analisis
+                    </h2>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="master-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-white border-blue-300 hover:bg-blue-50 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-4 text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                </svg>
+                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-blue-600">Klik untuk mengunggah</span> file master</p>
+                                <p class="text-xs text-gray-400">Pilih: Analisis_STS_Digitalisasi_Akuntansi...xlsx</p>
+                            </div>
+                            <input id="master-file" type="file" class="hidden" accept=".xlsx, .xls" />
+                        </label>
+                    </div>
+                    <div id="master-file-name" class="mt-2 text-sm text-green-600 font-medium hidden flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                        File terpilih: <span class="file-name ml-1 text-gray-700"></span>
+                    </div>
+                </section>
+
+                <!-- Input File Siswa (Multiple) -->
+                <section class="border border-gray-200 rounded-xl p-5 bg-gray-50/50">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-3 font-bold text-sm">2</span>
+                        Unggah File Jawaban Siswa
+                    </h2>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="student-files" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-white border-blue-300 hover:bg-blue-50 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-4 text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                </svg>
+                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold text-blue-600">Pilih semua file</span> milik siswa sekaligus</p>
+                                <p class="text-xs text-gray-400">Tekan Ctrl/Cmd untuk memilih banyak file (Alda, Meri, dkk)</p>
+                            </div>
+                            <!-- 'multiple' attribute allows selecting many files -->
+                            <input id="student-files" type="file" class="hidden" accept=".xlsx, .xls" multiple />
+                        </label>
+                    </div>
+                    <div id="student-files-count" class="mt-2 text-sm text-green-600 font-medium hidden"></div>
+                    <ul id="student-file-list" class="mt-2 text-xs text-gray-500 max-h-32 overflow-y-auto pl-4 list-decimal list-inside space-y-1"></ul>
+                </section>
+
+                <!-- Tombol Aksi -->
+                <div class="text-center pt-4">
+                    <button id="run-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-blue-500/30 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-lg w-full md:w-auto flex items-center justify-center mx-auto" disabled>
+                        <span id="btn-text">JALANKAN PROSES KOREKSI</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-10 border-t border-gray-200 pt-8">
+                <h3 class="text-sm font-bold text-gray-600 mb-3 uppercase tracking-wider flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Log Proses Terminal
+                </h3>
+                
+                <!-- Konsol Log -->
+                <div id="log-console" class="bg-gray-900 text-green-400 font-mono text-sm p-4 rounded-xl h-64 overflow-y-auto whitespace-pre-wrap shadow-inner border border-gray-700 leading-relaxed">Menunggu Anda mengunggah file Master dan File Siswa...</div>
+                
+                <!-- Area Download Hasil -->
+                <div id="download-area" class="mt-6 hidden">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                        <h4 class="text-lg font-bold text-green-700 mb-2">Proses Selesai!</h4>
+                        <p class="text-green-600 text-sm mb-4">Silakan unduh file Excel hasil analisis di bawah ini. File ini sudah berisi gabungan rumus master dan jawaban siswa.</p>
+                        
+                        <!-- List tombol unduhan akan muncul di sini -->
+                        <div id="download-links" class="flex flex-col gap-3 justify-center items-center max-h-60 overflow-y-auto p-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="text-center text-xs text-gray-400 mt-8">
+            &copy; 2026 Aplikasi Analyzer Excel Siswa | Ditenagai oleh SheetJS | Berjalan 100% secara lokal di browser
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elemen UI
+            const masterFileInput = document.getElementById('master-file');
+            const studentFilesInput = document.getElementById('student-files');
+            const masterFileName = document.getElementById('master-file-name');
+            const studentFilesCount = document.getElementById('student-files-count');
+            const studentFileList = document.getElementById('student-file-list');
+            const runBtn = document.getElementById('run-btn');
+            const btnText = document.getElementById('btn-text');
+            const logConsole = document.getElementById('log-console');
+            const downloadArea = document.getElementById('download-area');
+            const downloadLinks = document.getElementById('download-links');
+
+            // Variabel Global Data File
+            let masterFile = null;
+            let studentFiles = [];
+
+            // Nama sheet yang perlu dicari dari file siswa dan disalin ke file master
+            const TARGET_SHEETS = [
+                "Jurnal Kas Kecil",
+                "Jurnal Pembelian",
+                "Jurnal Penjualan",
+                "Penerimaan Kas",
+                "Pengeluaran Kas",
+                "Buku Besar",
+                "Laporan Keuangan"
+            ];
+
+            // Fungsi untuk menulis log ke konsol hitam
+            function log(message) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+                logConsole.innerHTML += `\n<span class="text-gray-500">[${timeStr}]</span> ${message}`;
+                logConsole.scrollTop = logConsole.scrollHeight; // Auto scroll ke bawah
+            }
+
+            // Fungsi untuk mengecek apakah kedua input (master & siswa) sudah diisi
+            function checkReady() {
+                if (masterFile && studentFiles.length > 0) {
+                    runBtn.disabled = false;
+                    runBtn.classList.remove('bg-gray-400');
+                    runBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                } else {
+                    runBtn.disabled = true;
+                    runBtn.classList.add('bg-gray-400');
+                    runBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                }
+            }
+
+            // Event Listeners untuk Input File
+            masterFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    masterFile = e.target.files[0];
+                    masterFileName.querySelector('.file-name').textContent = masterFile.name;
+                    masterFileName.classList.remove('hidden');
+                    log(`File Master berhasil dimuat: <span class="text-white">${masterFile.name}</span>`);
+                    checkReady();
+                }
+            });
+
+            studentFilesInput.addEventListener('change', (e) => {
+                studentFiles = Array.from(e.target.files);
+                if (studentFiles.length > 0) {
+                    studentFilesCount.textContent = `${studentFiles.length} file jawaban siswa siap diproses.`;
+                    studentFilesCount.classList.remove('hidden');
+                    
+                    studentFileList.innerHTML = '';
+                    studentFiles.forEach(file => {
+                        const li = document.createElement('li');
+                        li.textContent = file.name;
+                        studentFileList.appendChild(li);
+                    });
+                    
+                    log(`${studentFiles.length} file jawaban siswa masuk antrean.`);
+                    checkReady();
+                }
+            });
+
+            // Helper: Membaca file sebagai ArrayBuffer (Dibutuhkan oleh SheetJS)
+            function readFileAsync(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            runBtn.addEventListener('click', async () => {
+                // UI State Update
+                runBtn.disabled = true;
+                btnText.innerHTML = '<div class="loader"></div> MEMPROSES...';
+                downloadArea.classList.add('hidden');
+                downloadLinks.innerHTML = '';
+                
+                logConsole.innerHTML = "Memulai proses koreksi otomatis berbasis client-side...";
+
+                try {
+                    log("Membaca data biner File Master...");
+                    const masterDataBuffer = await readFileAsync(masterFile);
+                    
+                    // Loop memproses setiap file siswa
+                    for (let i = 0; i < studentFiles.length; i++) {
+                        const sFile = studentFiles[i];
+                        log(`\n-----------------------------------------`);
+                        log(`Memproses siswa ${i+1}/${studentFiles.length}: <span class="text-yellow-300">${sFile.name}</span>`);
+                        
+                        try {
+                            // 1. Baca data Excel milik Siswa (Hanya ambil nilainya/values)
+                            const studentDataBuffer = await readFileAsync(sFile);
+                            const studentWb = XLSX.read(studentDataBuffer, { type: 'array' });
+                            
+                            // 2. Baca "Copy-an" data Excel Master yang baru
+                            // Pengaturan cellFormula: true penting agar rumus di sheet analisis tidak hilang
+                            const masterWb = XLSX.read(masterDataBuffer, { type: 'array', cellFormula: true, cellStyles: true });
+                            
+                            let sheetsCopied = 0;
+                            let cellsCopiedTotal = 0;
+                            
+                            // 3. Salin data dari sheet siswa ke sheet master yang namanya sama
+                            TARGET_SHEETS.forEach(sheetName => {
+                                if (studentWb.SheetNames.includes(sheetName) && masterWb.SheetNames.includes(sheetName)) {
+                                    const studentSheet = studentWb.Sheets[sheetName];
+                                    const masterSheet = masterWb.Sheets[sheetName];
+                                    
+                                    // Cari jangkauan cell di sheet siswa (misal A1 sampai Z100)
+                                    const rangeStr = studentSheet['!ref'];
+                                    if(rangeStr) {
+                                        const range = XLSX.utils.decode_range(rangeStr);
+                                        let cellsInThisSheet = 0;
+                                        
+                                        // Looping setiap baris (R) dan kolom (C)
+                                        for(let R = range.s.r; R <= range.e.r; ++R) {
+                                            for(let C = range.s.c; C <= range.e.c; ++C) {
+                                                // Ubah index jadi nama cell, cth: {c:0, r:0} -> "A1"
+                                                const cellAddress = XLSX.utils.encode_cell({c:C, r:R});
+                                                const studentCell = studentSheet[cellAddress];
+                                                
+                                                // Jika cell siswa ada isinya
+                                                if(studentCell && studentCell.v !== undefined) {
+                                                    // Buat cell kosong di master jika belum ada
+                                                    if(!masterSheet[cellAddress]) masterSheet[cellAddress] = {};
+                                                    
+                                                    // Salin nilai (v), tipe data (t), dan string format (w)
+                                                    masterSheet[cellAddress].v = studentCell.v;
+                                                    masterSheet[cellAddress].t = studentCell.t;
+                                                    if (studentCell.w) masterSheet[cellAddress].w = studentCell.w;
+                                                    
+                                                    cellsInThisSheet++;
+                                                    cellsCopiedTotal++;
+                                                }
+                                            }
+                                        }
+                                        if(cellsInThisSheet > 0) sheetsCopied++;
+                                    }
+                                }
+                            });
+                            
+                            log(`Berhasil menyalin ${sheetsCopied} sheet (${cellsCopiedTotal} sel terisi).`);
+                            
+                            // 4. Buat File Excel Baru (Hasil Gabungan)
+                            log("Menulis ke file hasil (Mengkalkulasi ulang)...");
+                            const outFileName = `Dinilai_${sFile.name}`;
+                            // Write dengan type 'array' menghasilkan Uint8Array
+                            const outArray = XLSX.write(masterWb, { bookType: 'xlsx', type: 'array' });
+                            
+                            // 5. Buat Tombol Unduh untuk File Hasil Ini
+                            const blob = new Blob([outArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                            const url = URL.createObjectURL(blob);
+                            
+                            const btn = document.createElement('a');
+                            btn.href = url;
+                            btn.download = outFileName;
+                            btn.className = 'w-full md:w-3/4 bg-white hover:bg-green-50 text-gray-800 font-medium py-3 px-4 rounded-xl border-2 border-green-500 flex items-center justify-between shadow-sm transition-all group';
+                            btn.innerHTML = `
+                                <div class="flex items-center truncate">
+                                    <svg class="w-6 h-6 mr-3 text-green-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span class="truncate">${outFileName}</span>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold ml-2 shrink-0">UNDUH</span>
+                            `;
+                            
+                            downloadLinks.appendChild(btn);
+                            log(`File <span class="text-green-400">${outFileName}</span> siap diunduh.`);
+                            
+                        } catch (err) {
+                            log(`<span class="text-red-500">GAGAL memproses ${sFile.name}: ${err.message}</span>`);
+                            console.error(err);
+                        }
+                    }
+                    
+                    log(`\n=========================================`);
+                    log(`SELESAI. Silakan scroll ke atas pada layar untuk mengunduh hasilnya.`);
+                    
+                    // Tampilkan area unduhan
+                    downloadArea.classList.remove('hidden');
+                    downloadArea.scrollIntoView({ behavior: 'smooth' });
+
+                } catch (error) {
+                    log(`\n<span class="text-red-500">ERROR FATAL SISTEM: ${error.message}</span>`);
+                    console.error(error);
+                } finally {
+                    // Reset tombol
+                    runBtn.disabled = false;
+                    btnText.textContent = 'JALANKAN ULANG PROSES';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

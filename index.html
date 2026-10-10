@@ -37,6 +37,9 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-indigo-700 mb-2">Sistem Analyzer & Rekap Nilai Otomatis</h1>
             <p class="text-slate-500">Koreksi ratusan file siswa dalam hitungan detik (Output 1 File Rekapitulasi)</p>
+            <div class="mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded text-sm text-left inline-block">
+                <strong>Catatan Penting:</strong> Untuk bagian "Kunci Jawaban" (Input 2), pastikan Anda mengunggah file yang bernama <strong>PT_SINAR_PRIMA.xlsx</strong> yang telah disiapkan sebagai kunci jawaban standar.
+            </div>
         </header>
 
         <main class="bg-white shadow-2xl rounded-3xl p-6 md:p-10 border border-slate-100">
@@ -63,7 +66,7 @@
                 <section class="border border-emerald-100 rounded-2xl p-5 bg-emerald-50/30 relative">
                     <span class="absolute -top-3 -left-3 bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white">2</span>
                     <h2 class="text-base font-bold text-emerald-900 mb-3 text-center">Kunci Jawaban</h2>
-                    <p class="text-xs text-slate-500 text-center mb-4 leading-relaxed">File acuan yang benar untuk mengoreksi jawaban siswa.</p>
+                    <p class="text-xs text-slate-500 text-center mb-4 leading-relaxed">Gunakan file <strong>PT_SINAR_PRIMA.xlsx</strong>.</p>
                     
                     <label for="kunci-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer bg-white border-emerald-300 hover:bg-emerald-50 transition-colors">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
@@ -178,9 +181,16 @@
             inputKunci.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
                     fileKunci = e.target.files[0];
+                    
+                    // Peringatan jika nama file bukan PT_SINAR_PRIMA.xlsx
+                    if (fileKunci.name !== "PT_SINAR_PRIMA.xlsx") {
+                         log(`<span class="text-amber-400">[Peringatan] Anda mengunggah "${fileKunci.name}". Sangat disarankan menggunakan "PT_SINAR_PRIMA.xlsx" sebagai kunci jawaban yang valid.</span>`);
+                    } else {
+                         log(`File Kunci dimuat: ${fileKunci.name} (File yang Diharapkan)`);
+                    }
+
                     nameKunci.textContent = fileKunci.name;
                     nameKunci.classList.remove('hidden');
-                    log(`File Kunci dimuat: ${fileKunci.name}`);
                     checkReady();
                 }
             });
@@ -252,7 +262,7 @@
                     const dataAnalisis = await readFileAsync(fileAnalisis);
                     const wbAnalisis = XLSX.read(dataAnalisis, { type: 'array', cellFormula: true, cellStyles: true });
 
-                    log("Membaca File Kunci Jawaban...");
+                    log(`Membaca File Kunci Jawaban (${fileKunci.name})...`);
                     const dataKunci = await readFileAsync(fileKunci);
                     const wbKunci = XLSX.read(dataKunci, { type: 'array' });
 
